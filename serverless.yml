@@ -12,7 +12,7 @@ provider:
     role: arn:aws:iam::542697993719:role/LabRole
   environment:
     # Definir nombres únicos para las tablas usando el stage
-    TABLE_NAME_ARTISTS: ${self:provider.stage}-Pt_artists  # Nombre único para la tabla de usuarios
+    TABLE_NAME_ARTISTS: ${self:provider.stage}-Pt_artists 
     TABLE_NAME_TOKENS: ${self:provider.stage}-Pt_tokens_acceso_A  # Nombre único para la tabla de tokens
     SERVICE_NAME: ${self:service}
     STAGE: ${self:provider.stage}
@@ -78,7 +78,7 @@ functions:
           cors: true
           integration: lambda
 
-  # Función para obtener usuario por tenant_id
+  # Función para obtener usuario por artist_id
   getUserByTenantId:
     handler: getInfoById.lambda_handler
     memorySize: 320
@@ -189,7 +189,7 @@ functions:
 
 resources:
   Resources:
-    # Tabla DynamoDB para usuarios (Pt_artist)
+    # Tabla DynamoDB para artistas (Pt_artist)
     DynamoDbTableArtist:
       Type: 'AWS::DynamoDB::Table'
       Properties:
@@ -198,13 +198,13 @@ resources:
             AttributeType: S
           - AttributeName: country
             AttributeType: S
+          - AttributeName: name
+            AttributeType: S
         KeySchema:
           - AttributeName: artist_id
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        TableName: ${self:provider.environment.TABLE_NAME_ARTISTS}  # Nombre de la tabla de usuarios
+            KeyType: HASH  # Clave de partición
+        BillingMode: PAY_PER_REQUEST  # Alternativa para ProvisionedCapacity
+        TableName: ${self:provider.environment.TABLE_NAME_ARTISTS}  # Nombre de la tabla de artistas
 
         # Habilitar la recuperación de punto en el tiempo (backup)
         PointInTimeRecoverySpecification:
@@ -218,40 +218,33 @@ resources:
                 KeyType: HASH  # 'country' como clave HASH en el índice
             Projection:
               ProjectionType: ALL  # Incluye todos los atributos en el índice
-            ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
 
+          # Índice para 'name' + 'artist_id'
           - IndexName: NameTenantIndex  # Nombre del nuevo índice
             KeySchema:
               - AttributeName: name
                 KeyType: HASH  # 'name' como clave HASH en el índice
               - AttributeName: artist_id
-                KeyType: RANGE  # 'artist_id' como clave de ordenación (Sort Key)
+                KeyType: RANGE  # 'artist_id' como clave de ordenación
             Projection:
               ProjectionType: ALL  # Incluye todos los atributos en el índice
-            ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
 
     # Tabla DynamoDB para tokens (Pt_tokens_acceso)
     DynamoDbTableTokens:
       Type: 'AWS::DynamoDB::Table'
       Properties:
         AttributeDefinitions:
-          - AttributeName: tenant_id
+          - AttributeName: artist_id
             AttributeType: S
           - AttributeName: token
             AttributeType: S
         KeySchema:
-          - AttributeName: tenant_id
+          - AttributeName: artist_id
             KeyType: HASH
           - AttributeName: token
             KeyType: RANGE  # Sort key para los tokens
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        TableName: ${self:provider.environment.TABLE_NAME_TOKENS}  # Nombre de la tabla de tokens
+        BillingMode: PAY_PER_REQUEST  # Uso de pago por demanda
+        TableName: ${self:provider.environment.TABLE_NAME_TOKENS}
 
         # Habilitar la recuperación de punto en el tiempo (backup)
         PointInTimeRecoverySpecification:
