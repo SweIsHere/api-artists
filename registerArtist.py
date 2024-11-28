@@ -11,21 +11,14 @@ def hash_password(password):
 def lambda_handler(event, context):
     try:
         # Imprimir el evento para depuración
-        print("Received event:", json.dumps(event))
-
+        print("Received event:", event)
         # Obtener el nombre de la tabla desde las variables de entorno
         table_name = os.environ['TABLE_NAME_ARTISTS']
         print("Using DynamoDB table:", table_name)
 
-        # Obtener el cuerpo del evento y verificar si necesita ser parseado
-        if 'body' in event:
-            # Si el cuerpo es una cadena JSON, lo parseamos a un diccionario
-            body = json.loads(event['body']) if isinstance(event['body'], str) else event['body']
-        else:
-            body = {}
+        body = event.get('body', {})
 
-        print("Parsed body:", json.dumps(body))
-
+        print("Parsed body:", body)
         # Extraer los campos necesarios del cuerpo
         artist_id = body.get('artist_id')
         password = body.get('password')
@@ -38,7 +31,7 @@ def lambda_handler(event, context):
             mensaje = {'error': 'Invalid request body: missing artist_id, password, country or name'}
             return {
                 'statusCode': 400,
-                'body': mensaje
+                'body': mensaje  # Convertir el mensaje a JSON
             }
 
         # Normalizar el país ingresado (convertir a minúsculas y quitar espacios)
@@ -54,16 +47,28 @@ def lambda_handler(event, context):
 
         # Conectar a DynamoDB
         dynamodb = boto3.resource('dynamodb')
-        t_usuarios = dynamodb.Table(table_name)  # Usar el nombre de la tabla desde el environment variable
+        t_artist = dynamodb.Table(table_name)  # Usar el nombre de la tabla desde el environment variable
 
-        # Almacenar los datos del usuario en la tabla de usuarios en DynamoDB
-        t_usuarios.put_item(
+        # Verificar si el artista ya existe en la base de datos (basado en artist_id)
+        response = t_artist.query(
+            KeyConditionExpression=boto3.dynamodb.conditions.Key('artist_id').eq(artist_id)
+        )
+
+        if 'Item' in response:
+            mensaje = {'error': 'El artista ya está registrado'}
+            return {
+                'statusCode': 400,
+                'body': mensaje  # El artista ya existe
+            }
+
+        # Si no existe, registrar el nuevo artista
+        t_artist.put_item(
             Item={
                 'artist_id': artist_id,
                 'password': hashed_password,
                 'country': country_input,
                 'name': name,
-                'info' : info,
+                'info': info,
                 'photo': 'default-url'  # Valor por defecto para la foto
             }
         )

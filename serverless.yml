@@ -41,7 +41,7 @@ functions:
           integration: lambda    
 
   # Función para validar token
-  ValidateToken:
+  ValidateToken_A:
     handler: ValidateToken_A.lambda_handler
     memorySize: 520
 
