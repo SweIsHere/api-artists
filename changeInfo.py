@@ -106,7 +106,7 @@ def lambda_handler(event, context):
 
         return {
             'statusCode': 200,
-            'body': json.dumps({'message': 'Información del artista actualizada correctamente.'})
+            'message': 'Información del artista actualizada correctamente.'
         }
 
     except Exception as e:
@@ -114,5 +114,5 @@ def lambda_handler(event, context):
         print(f"Error al actualizar la información del artista: {e}")
         return {
             'statusCode': 500,
-            'body': json.dumps({'message': 'Error interno del servidor.'})
+            'message': 'Error interno del servidor.'
         }

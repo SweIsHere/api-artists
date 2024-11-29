@@ -100,13 +100,13 @@ functions:
                   "body": $input.body
                 }
 
-  # Función para cambiar el nombre de usuario
-  changeUsername:
-    handler: changeUsername.lambda_handler
+ 
+  changeName:
+    handler: changeName.lambda_handler
     memorySize: 320
     events:
       - http:
-          path: /artist/change-username
+          path: /artist/change-name
           method: patch
           cors: true
           integration: lambda

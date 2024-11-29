@@ -8,7 +8,7 @@ table = dynamodb.Table(os.environ['TABLE_NAME_ARTISTS'])  # Obtén el nombre de 
 
 def lambda_handler(event, context):
     # Obtener el 'name' del artista desde el evento
-    body = event['body']
+    body = event.get('body', {})
     name = body.get('name')
 
     if not name:
@@ -21,9 +21,9 @@ def lambda_handler(event, context):
     name = name.strip().lower()
 
     try:
-        # Intentar usar query con el GSI 'NameArtistIdIndex'
+        # Intentar usar query con el GSI 
         response = table.query(
-            IndexName='NameArtistIdIndex',  # El nombre del índice GSI
+            IndexName='NameTenantIndex',  # El nombre del índice GSI
             KeyConditionExpression=Key('name').eq(name)
         )
 
