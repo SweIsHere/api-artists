@@ -8,30 +8,46 @@ table = dynamodb.Table(os.environ['TABLE_NAME_ARTISTS'])  # Obtén el nombre de 
 
 def lambda_handler(event, context):
     # Obtener el 'name' del artista desde el evento
-    # Obtener el cuerpo de la solicitud
     body = event['body']
     name = body.get('name')
-    artist_id = body.get('artist_id')  # El 'artist_id' que se usa como sort key en el GSI
 
-    if not name or not artist_id:
+    if not name:
         return {
             'statusCode': 400,
-            'body': 'Faltan los parámetros "name" o "artist_id"'
+            'body': 'Faltan los parámetros "name"'
         }
 
+    # Normalizar el nombre a minúsculas
+    name = name.strip().lower()
+
     try:
-        # Usamos el GSI 'NameArtistIdIndex' para buscar artistas por nombre 
+        # Intentar usar query con el GSI 'NameArtistIdIndex'
         response = table.query(
             IndexName='NameArtistIdIndex',  # El nombre del índice GSI
-            KeyConditionExpression=Key('name').eq(name) 
+            KeyConditionExpression=Key('name').eq(name)
         )
 
         items = response.get('Items', [])
 
+        # Si no se encuentran resultados con query, hacer un scan
+        if not items:
+            print("No se encontraron resultados con query, usando scan...")
+            response = table.scan(
+                FilterExpression="contains(#name, :name_value)",
+                ExpressionAttributeNames={
+                    "#name": "name"  # Referencia a 'name' en la tabla
+                },
+                ExpressionAttributeValues={
+                    ":name_value": name  # El valor de búsqueda para 'name'
+                }
+            )
+
+            items = response.get('Items', [])
+
         if not items:
             return {
                 'statusCode': 404,
-                'body': 'No se encontraron artistas con el nombre proporcionados.'
+                'body': 'No se encontraron artistas con el nombre proporcionado.'
             }
 
         return {

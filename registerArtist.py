@@ -26,6 +26,9 @@ def lambda_handler(event, context):
         name = body.get('name')
         info = body.get('info')
 
+        if name:
+            name = name.strip().lower()
+
         # Verificar que todos los campos necesarios están presentes
         if not artist_id or not password or not country or not name:
             mensaje = {'error': 'Invalid request body: missing artist_id, password, country or name'}
@@ -54,7 +57,7 @@ def lambda_handler(event, context):
             KeyConditionExpression=boto3.dynamodb.conditions.Key('artist_id').eq(artist_id)
         )
 
-        if 'Item' in response:
+        if response['Items']:
             mensaje = {'error': 'El artista ya está registrado'}
             return {
                 'statusCode': 400,

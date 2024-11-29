@@ -84,7 +84,7 @@ functions:
     memorySize: 320
     events:
       - http:
-          path: /artist/info
+          path: /artist/getInfo
           method: post
           cors: true
           integration: lambda
@@ -149,41 +149,11 @@ functions:
     events:
       - http:
           path: /artist/getAllbyName
-          method: patch
+          method: post
           cors: true
           integration: lambda
-          request:
-            template:
-              application/json: |
-                {
-                  "method": "$context.httpMethod",
-                  "path": "$context.path",
-                  "headers": {
-                    "Authorization": "$input.params('Authorization')"
-                  },
-                  "body": $input.body
-                }
+          
     
-  getByName_and_Id:
-    handler: getByName_and_Id.lambda_handler
-    memorySize: 320
-    events:
-      - http:
-          path: /artist/getByName_and_Id
-          method: patch
-          cors: true
-          integration: lambda
-          request:
-            template:
-              application/json: |
-                {
-                  "method": "$context.httpMethod",
-                  "path": "$context.path",
-                  "headers": {
-                    "Authorization": "$input.params('Authorization')"
-                  },
-                  "body": $input.body
-                }
   
 
 
@@ -219,7 +189,7 @@ resources:
             Projection:
               ProjectionType: ALL  # Incluye todos los atributos en el índice
 
-          # Índice para 'name' + 'artist_id'
+        # Índice para 'name' + 'artist_id'
           - IndexName: NameTenantIndex  # Nombre del nuevo índice
             KeySchema:
               - AttributeName: name

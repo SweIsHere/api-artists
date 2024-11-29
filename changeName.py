@@ -74,6 +74,8 @@ def lambda_handler(event, context):
     try:
         # Extraer los datos necesarios para cambiar el username
         new_name = body.get('new_name')
+        if new_name:
+            new_name = new_name.strip().lower()
         
         # Validar que los parámetros requeridos estén presentes
         if not new_name:
