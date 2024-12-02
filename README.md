@@ -1,4 +1,4 @@
-# API Users
+# API Artists
 
 Este repositorio contiene una API para gestionar usuarios/artistas, incluyendo operaciones como el registro, inicio de sesión y modificación de datos. La API está construida usando AWS Lambda, API Gateway y DynamoDB.
 
